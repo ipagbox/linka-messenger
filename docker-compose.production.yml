@@ -35,16 +35,16 @@ services:
     image: matrixdotorg/synapse:latest
     restart: unless-stopped
     environment:
-      SYNAPSE_CONFIG_PATH: /data/homeserver.yaml
+      SYNAPSE_CONFIG_PATH: /config/homeserver.yaml
     volumes:
       - synapse-data:/data
-      - ./infrastructure/synapse/homeserver.production.yaml:/data/config/homeserver.yaml:ro
-      - ./infrastructure/synapse/log.config:/data/config/log.config:ro
+      - ./infrastructure/synapse/homeserver.production.yaml:/config/homeserver.yaml:ro
+      - ./infrastructure/synapse/log.config:/config/log.config:ro
     depends_on:
       - db-synapse
     networks:
       - linka-net
-    command: run --config-path /data/config/homeserver.yaml
+    command: run --config-path /config/homeserver.yaml
 
   backend:
     build: ./backend

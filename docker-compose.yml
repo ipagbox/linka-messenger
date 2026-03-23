@@ -36,18 +36,16 @@ services:
 
   synapse:
     image: matrixdotorg/synapse:latest
-    environment:
-      SYNAPSE_CONFIG_PATH: /data/homeserver.yaml
     volumes:
       - synapse-data:/data
-      - ./infrastructure/synapse:/data/config:ro
+      - ./infrastructure/synapse:/config:ro
     ports:
       - "8008:8008"
     depends_on:
       - db-synapse
     networks:
       - linka-net
-    command: run --config-path /data/config/homeserver.yaml
+    command: run --config-path /config/homeserver.yaml
 
   backend:
     build: ./backend

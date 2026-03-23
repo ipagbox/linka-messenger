@@ -20,7 +20,7 @@ database:
     cp_min: 5
     cp_max: 10
 
-log_config: "/data/config/log.config"
+log_config: "/config/log.config"
 
 media_store_path: /data/media_store
 

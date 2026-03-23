@@ -1,8 +1,28 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# If running the rails server then prepare database and seed
+if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ] || \
+   [[ "${*}" == *"rails server"* ]] || [[ "${*}" == *"rails s"* ]]; then
+
+  echo "==> Preparing database..."
   ./bin/rails db:prepare
+
+  # Wait for Synapse to be available before seeding
+  SYNAPSE_URL="${MATRIX_HOMESERVER_URL:-http://synapse:8008}"
+  echo "==> Waiting for Synapse at ${SYNAPSE_URL}..."
+  for i in $(seq 1 30); do
+    if curl -sf "${SYNAPSE_URL}/_matrix/client/versions" > /dev/null 2>&1; then
+      echo "==> Synapse is ready"
+      break
+    fi
+    if [ "$i" -eq 30 ]; then
+      echo "==> WARNING: Synapse not available after 60s, seeding without it"
+    fi
+    sleep 2
+  done
+
+  echo "==> Running database seed..."
+  ./bin/rails db:seed
 fi
 
 exec "${@}"

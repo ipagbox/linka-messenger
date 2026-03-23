@@ -20,17 +20,18 @@ describe('LoginPage', () => {
     } as ReturnType<typeof useAuthStore>)
   })
 
-  it('renders login form', () => {
+  it('renders login form with password field', () => {
     render(
       <MemoryRouter>
         <LoginPage />
       </MemoryRouter>
     )
     expect(screen.getByLabelText(/matrix user id/i)).toBeInTheDocument()
-    expect(screen.getByText('Sign In')).toBeInTheDocument()
+    expect(screen.getByLabelText(/пароль/i)).toBeInTheDocument()
+    expect(screen.getByText('Войти')).toBeInTheDocument()
   })
 
-  it('calls login on submit', async () => {
+  it('calls login with user id and password', async () => {
     mockLogin.mockResolvedValue(undefined)
     render(
       <MemoryRouter initialEntries={['/login']}>
@@ -43,9 +44,12 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText(/matrix user id/i), {
       target: { value: '@alice:localhost' },
     })
-    fireEvent.click(screen.getByText('Sign In'))
+    fireEvent.change(screen.getByLabelText(/пароль/i), {
+      target: { value: 'secret123' },
+    })
+    fireEvent.click(screen.getByText('Войти'))
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith('@alice:localhost')
+      expect(mockLogin).toHaveBeenCalledWith('@alice:localhost', 'secret123')
     })
   })
 
@@ -59,9 +63,28 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText(/matrix user id/i), {
       target: { value: '@bad:localhost' },
     })
-    fireEvent.click(screen.getByText('Sign In'))
-    await waitFor(() => {
-      expect(screen.getByText(/login failed/i)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText(/пароль/i), {
+      target: { value: 'wrong' },
     })
+    fireEvent.click(screen.getByText('Войти'))
+    await waitFor(() => {
+      expect(screen.getByText(/неверные учётные данные/i)).toBeInTheDocument()
+    })
+  })
+
+  it('shows error when password is empty', async () => {
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    )
+    fireEvent.change(screen.getByLabelText(/matrix user id/i), {
+      target: { value: '@alice:localhost' },
+    })
+    fireEvent.click(screen.getByText('Войти'))
+    await waitFor(() => {
+      expect(screen.getByText(/введите пароль/i)).toBeInTheDocument()
+    })
+    expect(mockLogin).not.toHaveBeenCalled()
   })
 })

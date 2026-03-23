@@ -2,23 +2,37 @@ class MatrixAdminService
   include HTTParty
 
   BASE_URL = ENV.fetch("MATRIX_HOMESERVER_URL", "http://localhost:8008")
-  ADMIN_TOKEN = ENV.fetch("SYNAPSE_ADMIN_TOKEN", "")
+  SHARED_SECRET = ENV.fetch("SYNAPSE_SHARED_SECRET", ENV.fetch("SYNAPSE_ADMIN_TOKEN", ""))
 
   def initialize
     @base_url = BASE_URL
-    @admin_token = ADMIN_TOKEN
+    @shared_secret = SHARED_SECRET
+    @admin_access_token = nil
   end
 
-  def create_user(username, display_name, password)
-    user_id = "@#{username}:#{server_name}"
-    response = put(
-      "/_synapse/admin/v2/users/#{URI.encode_www_form_component(user_id)}",
-      {
-        password: password,
+  def create_user(username, display_name, password, admin: false)
+    nonce_response = self.class.get("#{@base_url}/_synapse/admin/v1/register")
+    raise MatrixError, "Failed to fetch registration nonce: #{nonce_response.body}" unless nonce_response.success?
+
+    nonce = nonce_response.parsed_response["nonce"]
+    role = admin ? "admin" : "notadmin"
+    mac = OpenSSL::HMAC.hexdigest(
+      "SHA1",
+      @shared_secret,
+      [ nonce, username, password, role ].join("\x00")
+    )
+
+    response = self.class.post(
+      "#{@base_url}/_synapse/admin/v1/register",
+      headers: { "Content-Type" => "application/json" },
+      body: {
+        nonce: nonce,
+        username: username,
         displayname: display_name,
-        admin: false,
-        deactivated: false
-      }
+        password: password,
+        admin: admin,
+        mac: mac
+      }.to_json
     )
     raise MatrixError, "Failed to create user: #{response.body}" unless response.success?
 
@@ -123,6 +137,10 @@ class MatrixAdminService
     response.parsed_response
   end
 
+  def admin_headers
+    headers
+  end
+
   private
 
   def server_name
@@ -131,7 +149,7 @@ class MatrixAdminService
 
   def headers
     {
-      "Authorization" => "Bearer #{@admin_token}",
+      "Authorization" => "Bearer #{admin_access_token}",
       "Content-Type" => "application/json"
     }
   end
@@ -172,6 +190,20 @@ class MatrixAdminService
       headers: user_headers,
       body: { via: [ server_name ], suggested: false }.to_json
     )
+  end
+
+  def admin_access_token
+    @admin_access_token ||= begin
+      env_token = ENV["SYNAPSE_ADMIN_TOKEN"]
+      if env_token.present?
+        env_token
+      else
+        admin_password = ENV.fetch("ADMIN_PASSWORD", "")
+        raise MatrixError, "ADMIN_PASSWORD is not configured" if admin_password.blank?
+
+        login_with_password("@admin:#{server_name}", admin_password)["access_token"]
+      end
+    end
   end
 
   class MatrixError < StandardError; end

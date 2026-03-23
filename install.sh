@@ -464,6 +464,17 @@ wait_for_ready() {
         fi
         sleep 4
     done
+
+    info "Проверка входа администратора в Matrix..."
+    ADMIN_LOGIN_STATUS=$(docker compose -f docker-compose.production.yml exec -T backend sh -lc \
+        "curl -s -o /tmp/admin-login.json -w '%{http_code}' http://synapse:8008/_matrix/client/v3/login \
+        -H 'Content-Type: application/json' \
+        --data '{\"type\":\"m.login.password\",\"identifier\":{\"type\":\"m.id.user\",\"user\":\"@admin:${DOMAIN}\"},\"password\":\"${ADMIN_PASSWORD}\"}'")
+    if [ "$ADMIN_LOGIN_STATUS" = "200" ]; then
+        ok "Администратор может войти в Matrix"
+    else
+        warn "Matrix login администратора не прошёл (HTTP ${ADMIN_LOGIN_STATUS}). Проверьте: docker compose -f docker-compose.production.yml logs backend"
+    fi
 }
 
 # ─── Итоговая информация ─────────────────────────────────────────────

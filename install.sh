@@ -3,10 +3,10 @@
 # Linka Messenger — установка на чистый VPS (Debian/Ubuntu)
 #
 # Запуск одной строкой:
-#   curl -sSL https://raw.githubusercontent.com/ipagbox/linka-messenger/main/install.sh | bash
+#   bash <(curl -sSL https://raw.githubusercontent.com/ipagbox/linka-messenger/main/install.sh)
 #
 # Или если уже клонирован репозиторий:
-#   bash install.sh
+#   sudo bash install.sh
 #
 set -euo pipefail
 
@@ -110,7 +110,7 @@ ask_config() {
 
     # Домен
     while true; do
-        read -rp "$(echo -e "${BOLD}Домен${NC} (например, messenger.example.com): ")" DOMAIN
+        read -rp "$(echo -e "${BOLD}Домен${NC} (например, messenger.example.com): ")" DOMAIN </dev/tty
         if [[ "$DOMAIN" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$ ]]; then
             break
         fi
@@ -121,7 +121,7 @@ ask_config() {
 
     # Email для Let's Encrypt
     while true; do
-        read -rp "$(echo -e "${BOLD}Email${NC} (для SSL-сертификата Let's Encrypt): ")" EMAIL
+        read -rp "$(echo -e "${BOLD}Email${NC} (для SSL-сертификата Let's Encrypt): ")" EMAIL </dev/tty
         if [[ "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
             break
         fi
@@ -132,10 +132,10 @@ ask_config() {
 
     # Пароль администратора
     while true; do
-        read -rsp "$(echo -e "${BOLD}Пароль администратора${NC} (мин. 8 символов): ")" ADMIN_PASSWORD
+        read -rsp "$(echo -e "${BOLD}Пароль администратора${NC} (мин. 8 символов): ")" ADMIN_PASSWORD </dev/tty
         echo ""
         if [ ${#ADMIN_PASSWORD} -ge 8 ]; then
-            read -rsp "$(echo -e "Повторите пароль: ")" ADMIN_PASSWORD_CONFIRM
+            read -rsp "$(echo -e "Повторите пароль: ")" ADMIN_PASSWORD_CONFIRM </dev/tty
             echo ""
             if [ "$ADMIN_PASSWORD" = "$ADMIN_PASSWORD_CONFIRM" ]; then
                 break
@@ -153,7 +153,7 @@ ask_config() {
     echo -e "  Домен:  ${GREEN}$DOMAIN${NC}"
     echo -e "  Email:  ${GREEN}$EMAIL${NC}"
     echo ""
-    read -rp "$(echo -e "${BOLD}Всё верно? (y/n):${NC} ")" CONFIRM
+    read -rp "$(echo -e "${BOLD}Всё верно? (y/n):${NC} ")" CONFIRM </dev/tty
     if [[ ! "$CONFIRM" =~ ^[yYдДтТ]$ ]]; then
         info "Установка отменена."
         exit 0

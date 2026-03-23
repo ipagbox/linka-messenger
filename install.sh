@@ -370,7 +370,7 @@ TMPNGINX
     sleep 3
 
     info "Запрос сертификата у Let's Encrypt..."
-    docker compose -f docker-compose.production.yml run --rm --entrypoint "" certbot \
+    if ! docker compose -f docker-compose.production.yml run --rm --entrypoint "" certbot \
         certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
@@ -378,10 +378,8 @@ TMPNGINX
         --agree-tos \
         --no-eff-email \
         --non-interactive \
-        -d "$DOMAIN"
-
-    if [ $? -ne 0 ]; then
-        # Восстанавливаем
+        -d "$DOMAIN"; then
+        # Восстанавливаем nginx конфиг и останавливаем
         cp "${ORIG_NGINX_CONF}.full" "$ORIG_NGINX_CONF"
         docker compose -f docker-compose.production.yml down
         fatal "Не удалось получить SSL-сертификат. Убедитесь, что домен $DOMAIN указывает на этот сервер."
@@ -407,6 +405,11 @@ start_services() {
 
     info "Сборка образов (это может занять несколько минут)..."
     docker compose -f docker-compose.production.yml build --quiet
+
+    # Synapse работает от uid 991 — нужно дать права на /data volume
+    info "Инициализация Synapse data..."
+    docker compose -f docker-compose.production.yml run --rm --entrypoint "" \
+        synapse chown -R 991:991 /data
 
     info "Запуск сервисов..."
     docker compose -f docker-compose.production.yml up -d

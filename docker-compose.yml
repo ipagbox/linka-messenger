@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  db-rails:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: linka
+      POSTGRES_PASSWORD: ${RAILS_DB_PASSWORD:-password}
+      POSTGRES_DB: linka_dev
+    volumes:
+      - db-rails-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - linka-net
+
+  db-synapse:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: ${SYNAPSE_DB_PASSWORD:-synapse_password}
+      POSTGRES_DB: synapse
+    volumes:
+      - db-synapse-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - linka-net
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - linka-net
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    environment:
+      SYNAPSE_CONFIG_PATH: /data/homeserver.yaml
+    volumes:
+      - synapse-data:/data
+      - ./infrastructure/synapse:/data/config:ro
+    ports:
+      - "8008:8008"
+    depends_on:
+      - db-synapse
+    networks:
+      - linka-net
+    command: run --config-path /data/config/homeserver.yaml
+
+  backend:
+    build: ./backend
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgres://linka:${RAILS_DB_PASSWORD:-password}@db-rails:5432/linka_dev
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-development_secret_key_base_change_in_production}
+      JWT_SECRET: ${JWT_SECRET:-development_jwt_secret_change_in_production}
+      MATRIX_HOMESERVER_URL: http://synapse:8008
+      MATRIX_SERVER_NAME: ${SYNAPSE_SERVER_NAME:-localhost}
+      SYNAPSE_ADMIN_TOKEN: ${SYNAPSE_ADMIN_TOKEN:-}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db-rails
+      - redis
+    networks:
+      - linka-net
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost/api
+      VITE_MATRIX_URL: http://localhost
+    ports:
+      - "5173:5173"
+    networks:
+      - linka-net
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./infrastructure/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - backend
+      - synapse
+    networks:
+      - linka-net
+
+volumes:
+  db-rails-data:
+  db-synapse-data:
+  synapse-data:
+  redis-data:
+
+networks:
+  linka-net:
+    driver: bridge

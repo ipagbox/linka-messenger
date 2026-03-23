@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+vendor/bundle/
+
+# Build
+dist/
+build/
+tmp/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+log/
+*.log
+
+# Coverage
+coverage/
+.simplecov
+
+# Ruby
+.bundle/
+
+# Docker
+docker-compose.override.yml
+
+# Test results
+test-results/
+playwright-report/

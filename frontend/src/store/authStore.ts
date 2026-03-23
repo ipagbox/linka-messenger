@@ -14,7 +14,7 @@ interface AuthState {
   error: string | null
 
   onboard: (token: string, displayName: string) => Promise<void>
-  login: (matrixUserId: string) => Promise<void>
+  login: (matrixUserId: string, password: string) => Promise<void>
   restoreSession: () => Promise<void>
   setCredentials: (credentials: {
     matrixAccessToken: string
@@ -58,14 +58,16 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      login: async (matrixUserId) => {
+      login: async (matrixUserId, password) => {
         set({ isLoading: true, error: null })
         try {
-          const result = await loginApi(matrixUserId)
+          const result = await loginApi(matrixUserId, password)
           localStorage.setItem('rails_token', result.token)
           set({
             user: result.user as User,
             matrixUserId,
+            matrixAccessToken: result.matrix_access_token,
+            matrixDeviceId: result.matrix_device_id,
             railsToken: result.token,
             isAuthenticated: true,
             isLoading: false,

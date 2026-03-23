@@ -108,6 +108,21 @@ class MatrixAdminService
     response.parsed_response["access_token"]
   end
 
+  def login_with_password(matrix_user_id, password)
+    response = self.class.post(
+      "#{@base_url}/_matrix/client/v3/login",
+      headers: { "Content-Type" => "application/json" },
+      body: {
+        type: "m.login.password",
+        identifier: { type: "m.id.user", user: matrix_user_id },
+        password: password
+      }.to_json
+    )
+    raise MatrixError, "Invalid credentials" unless response.success?
+
+    response.parsed_response
+  end
+
   private
 
   def server_name

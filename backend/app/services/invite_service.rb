@@ -1,6 +1,6 @@
 class InviteService
   def create(circle:, creator:, max_uses: nil, expires_in: nil)
-    max_uses ||= ServerSetting.get('default_invite_max_uses').to_i
+    max_uses ||= ServerSetting.get("default_invite_max_uses").to_i
     max_uses = 15 if max_uses <= 0
 
     invite = Invite.new(
@@ -26,14 +26,14 @@ class InviteService
 
   def consume(token, user)
     invite = validate(token)
-    raise InvalidTokenError, 'Invalid or expired invite' unless invite
+    raise InvalidTokenError, "Invalid or expired invite" unless invite
 
     ActiveRecord::Base.transaction do
       invite.consume!
       CircleMembership.create!(
         user: user,
         circle: invite.circle,
-        role: 'member'
+        role: "member"
       )
     end
 

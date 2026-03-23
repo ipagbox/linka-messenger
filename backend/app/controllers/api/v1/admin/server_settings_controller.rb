@@ -15,7 +15,7 @@ module Api
           settings_params.each do |key, value|
             ServerSetting.set(key, value)
           end
-          render json: { message: 'Settings updated' }
+          render json: { message: "Settings updated" }
         end
       end
     end

@@ -3,7 +3,7 @@ module Api
     class InvitesController < ApplicationController
       include Authenticatable
 
-      skip_before_action :authenticate!, only: [:validate]
+      skip_before_action :authenticate!, only: [ :validate ]
 
       def validate
         token = params[:token]
@@ -16,7 +16,7 @@ module Api
             expires_at: invite.expires_at
           }
         else
-          render json: { valid: false, reason: 'Invalid, expired, or exhausted invite' }, status: :not_found
+          render json: { valid: false, reason: "Invalid, expired, or exhausted invite" }, status: :not_found
         end
       end
     end

@@ -1,5 +1,5 @@
 class Circle < ApplicationRecord
-  belongs_to :creator, class_name: 'User', optional: true
+  belongs_to :creator, class_name: "User", optional: true
   has_many :circle_memberships, dependent: :destroy
   has_many :members, through: :circle_memberships, source: :user
   has_many :invites, dependent: :destroy

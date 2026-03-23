@@ -24,18 +24,18 @@ module Api
             created_at: user.created_at
           }
         rescue ActiveRecord::RecordNotFound
-          render json: { error: 'User not found' }, status: :not_found
+          render json: { error: "User not found" }, status: :not_found
         end
 
         def destroy
           user = User.find(params[:id])
-          return render json: { error: 'Cannot delete yourself' }, status: :unprocessable_entity if user == current_user
+          return render json: { error: "Cannot delete yourself" }, status: :unprocessable_entity if user == current_user
 
           MatrixAdminService.new.deactivate_user(user.matrix_user_id)
           user.destroy
-          render json: { message: 'User deleted' }
+          render json: { message: "User deleted" }
         rescue ActiveRecord::RecordNotFound
-          render json: { error: 'User not found' }, status: :not_found
+          render json: { error: "User not found" }, status: :not_found
         end
       end
     end

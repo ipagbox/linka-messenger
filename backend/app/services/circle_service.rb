@@ -1,6 +1,6 @@
 class CircleService
   def create(name:, creator:, max_members: 15)
-    raise LimitError, 'Circle creation limit reached' unless creator.can_create_circle?
+    raise LimitError, "Circle creation limit reached" unless creator.can_create_circle?
 
     matrix_service = MatrixAdminService.new
 
@@ -25,7 +25,7 @@ class CircleService
       CircleMembership.create!(
         user: creator,
         circle: circle,
-        role: 'admin'
+        role: "admin"
       )
 
       invite_token = InviteService.new.create(

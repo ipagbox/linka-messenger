@@ -1,8 +1,8 @@
 class MatrixAdminService
   include HTTParty
 
-  BASE_URL = ENV.fetch('MATRIX_HOMESERVER_URL', 'http://localhost:8008')
-  ADMIN_TOKEN = ENV.fetch('SYNAPSE_ADMIN_TOKEN', '')
+  BASE_URL = ENV.fetch("MATRIX_HOMESERVER_URL", "http://localhost:8008")
+  ADMIN_TOKEN = ENV.fetch("SYNAPSE_ADMIN_TOKEN", "")
 
   def initialize
     @base_url = BASE_URL
@@ -27,12 +27,12 @@ class MatrixAdminService
 
   def create_space(name, creator_user_id)
     response = post_as_user(
-      '/_matrix/client/v3/createRoom',
+      "/_matrix/client/v3/createRoom",
       {
         name: name,
         topic: "#{name} Circle",
-        creation_content: { 'type' => 'm.space' },
-        preset: 'private_chat',
+        creation_content: { "type" => "m.space" },
+        preset: "private_chat",
         power_level_content_override: {
           users: { creator_user_id => 100 }
         }
@@ -41,20 +41,20 @@ class MatrixAdminService
     )
     raise MatrixError, "Failed to create space: #{response.body}" unless response.success?
 
-    response.parsed_response['room_id']
+    response.parsed_response["room_id"]
   end
 
   def create_room(name, space_id, creator_user_id)
     response = post_as_user(
-      '/_matrix/client/v3/createRoom',
+      "/_matrix/client/v3/createRoom",
       {
         name: name,
-        preset: 'private_chat',
+        preset: "private_chat",
         initial_state: [
           {
-            type: 'm.room.guest_access',
-            state_key: '',
-            content: { 'guest_access' => 'forbidden' }
+            type: "m.room.guest_access",
+            state_key: "",
+            content: { "guest_access" => "forbidden" }
           }
         ]
       },
@@ -62,7 +62,7 @@ class MatrixAdminService
     )
     raise MatrixError, "Failed to create room: #{response.body}" unless response.success?
 
-    room_id = response.parsed_response['room_id']
+    room_id = response.parsed_response["room_id"]
     add_room_to_space(room_id, space_id, creator_user_id) if space_id
     room_id
   end
@@ -105,19 +105,19 @@ class MatrixAdminService
     )
     raise MatrixError, "Failed to get access token: #{response.body}" unless response.success?
 
-    response.parsed_response['access_token']
+    response.parsed_response["access_token"]
   end
 
   private
 
   def server_name
-    ENV.fetch('MATRIX_SERVER_NAME', 'localhost')
+    ENV.fetch("MATRIX_SERVER_NAME", "localhost")
   end
 
   def headers
     {
-      'Authorization' => "Bearer #{@admin_token}",
-      'Content-Type' => 'application/json'
+      "Authorization" => "Bearer #{@admin_token}",
+      "Content-Type" => "application/json"
     }
   end
 
@@ -138,24 +138,24 @@ class MatrixAdminService
   end
 
   def post_as_user(path, body, user_id)
-    access_token = get_user_access_token(user_id.gsub(/@|:.*/, ''))
+    access_token = get_user_access_token(user_id.gsub(/@|:.*/, ""))
     user_headers = {
-      'Authorization' => "Bearer #{access_token}",
-      'Content-Type' => 'application/json'
+      "Authorization" => "Bearer #{access_token}",
+      "Content-Type" => "application/json"
     }
     self.class.post("#{@base_url}#{path}", headers: user_headers, body: body.to_json)
   end
 
   def add_room_to_space(room_id, space_id, user_id)
-    access_token = get_user_access_token(user_id.gsub(/@|:.*/, ''))
+    access_token = get_user_access_token(user_id.gsub(/@|:.*/, ""))
     user_headers = {
-      'Authorization' => "Bearer #{access_token}",
-      'Content-Type' => 'application/json'
+      "Authorization" => "Bearer #{access_token}",
+      "Content-Type" => "application/json"
     }
     self.class.put(
       "#{@base_url}/_matrix/client/v3/rooms/#{URI.encode_www_form_component(space_id)}/state/m.space.child/#{URI.encode_www_form_component(room_id)}",
       headers: user_headers,
-      body: { via: [server_name], suggested: false }.to_json
+      body: { via: [ server_name ], suggested: false }.to_json
     )
   end
 

@@ -3,11 +3,11 @@ class ServerSetting < ApplicationRecord
   validates :value_type, inclusion: { in: %w[string integer boolean] }
 
   DEFAULTS = {
-    'max_circles_per_user' => { value: '5', value_type: 'integer', description: 'Maximum circles a user can create' },
-    'default_invite_max_uses' => { value: '15', value_type: 'integer', description: 'Default max uses for invites' },
-    'default_invite_expiry_days' => { value: '7', value_type: 'integer', description: 'Default invite expiry in days' },
-    'max_members_per_circle' => { value: '50', value_type: 'integer', description: 'Maximum members per circle' },
-    'registration_enabled' => { value: 'false', value_type: 'boolean', description: 'Allow new registrations' }
+    "max_circles_per_user" => { value: "5", value_type: "integer", description: "Maximum circles a user can create" },
+    "default_invite_max_uses" => { value: "15", value_type: "integer", description: "Default max uses for invites" },
+    "default_invite_expiry_days" => { value: "7", value_type: "integer", description: "Default invite expiry in days" },
+    "max_members_per_circle" => { value: "50", value_type: "integer", description: "Maximum members per circle" },
+    "registration_enabled" => { value: "false", value_type: "boolean", description: "Allow new registrations" }
   }.freeze
 
   def self.get(key)
@@ -22,7 +22,7 @@ class ServerSetting < ApplicationRecord
     default = DEFAULTS[key] || {}
     setting.update!(
       value: value.to_s,
-      value_type: default[:value_type] || 'string',
+      value_type: default[:value_type] || "string",
       description: setting.description || default[:description]
     )
   end

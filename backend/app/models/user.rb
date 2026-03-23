@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   has_many :circle_memberships, dependent: :destroy
   has_many :circles, through: :circle_memberships
-  has_many :created_circles, class_name: 'Circle', foreign_key: :creator_id, dependent: :nullify
+  has_many :created_circles, class_name: "Circle", foreign_key: :creator_id, dependent: :nullify
   has_many :invites, foreign_key: :creator_id, dependent: :destroy
 
   validates :matrix_user_id, presence: true, uniqueness: true
@@ -14,7 +14,7 @@ class User < ApplicationRecord
   end
 
   def can_create_circle?
-    created_circles_limit = ServerSetting.get('max_circles_per_user').to_i
+    created_circles_limit = ServerSetting.get("max_circles_per_user").to_i
     created_circles.count < created_circles_limit
   end
 

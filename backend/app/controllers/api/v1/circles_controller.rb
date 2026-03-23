@@ -12,7 +12,7 @@ module Api
         circle = current_user.circles.find(params[:id])
         render json: serialize_circle(circle)
       rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Circle not found' }, status: :not_found
+        render json: { error: "Circle not found" }, status: :not_found
       end
 
       def create

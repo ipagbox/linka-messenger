@@ -9,7 +9,7 @@ module Api
           invites = circle.invites.includes(:creator)
           render json: invites.map { |i| serialize_invite(i) }
         rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Circle not found' }, status: :not_found
+          render json: { error: "Circle not found" }, status: :not_found
         end
 
         def create
@@ -18,7 +18,7 @@ module Api
           token = service.create(
             circle: circle,
             creator: current_user,
-            max_uses: params[:max_uses]&.to_i || ServerSetting.get('default_invite_max_uses').to_i,
+            max_uses: params[:max_uses]&.to_i || ServerSetting.get("default_invite_max_uses").to_i,
             expires_in: params[:expires_in_hours]&.to_i&.hours
           )
 
@@ -29,7 +29,7 @@ module Api
             invite: serialize_invite(invite)
           }, status: :created
         rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Circle not found' }, status: :not_found
+          render json: { error: "Circle not found" }, status: :not_found
         end
 
         private

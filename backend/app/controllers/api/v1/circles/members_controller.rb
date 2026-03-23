@@ -13,11 +13,11 @@ module Api
               id: m.id,
               matrix_user_id: m.matrix_user_id,
               display_name: m.display_name,
-              role: membership&.role || 'member'
+              role: membership&.role || "member"
             }
           }
         rescue ActiveRecord::RecordNotFound
-          render json: { error: 'Circle not found' }, status: :not_found
+          render json: { error: "Circle not found" }, status: :not_found
         end
       end
     end

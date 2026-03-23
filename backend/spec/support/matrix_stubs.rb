@@ -32,7 +32,7 @@ module MatrixStubs
     stub_request(:post, path)
       .to_return(
         status: 200,
-        body: { joined_rooms: [room_id].compact }.to_json,
+        body: { joined_rooms: [ room_id ].compact }.to_json,
         headers: { 'Content-Type' => 'application/json' }
       )
   end

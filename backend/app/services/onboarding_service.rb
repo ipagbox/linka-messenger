@@ -1,7 +1,7 @@
 class OnboardingService
   def register(token:, display_name:)
     invite = InviteService.new.validate(token)
-    raise InvalidInviteError, 'Invalid or expired invite' unless invite
+    raise InvalidInviteError, "Invalid or expired invite" unless invite
 
     username = generate_username(display_name)
     password = SecureRandom.hex(16)
@@ -26,7 +26,7 @@ class OnboardingService
         access_token = matrix_service.get_user_access_token(username)
         device_id = SecureRandom.hex(8).upcase
 
-        [invite.circle.matrix_general_room_id, invite.circle.matrix_announcements_room_id].compact.each do |room_id|
+        [ invite.circle.matrix_general_room_id, invite.circle.matrix_announcements_room_id ].compact.each do |room_id|
           matrix_service.join_room(user.matrix_user_id, room_id)
         rescue MatrixAdminService::MatrixError
           # Non-fatal: room join failure
@@ -46,11 +46,11 @@ class OnboardingService
       }
     end
   rescue ActiveRecord::RecordNotUnique
-    raise ConflictError, 'Username already taken'
+    raise ConflictError, "Username already taken"
   end
 
   def bootstrap_admin(display_name:, password:)
-    username = 'admin'
+    username = "admin"
     matrix_service = MatrixAdminService.new
 
     begin
@@ -70,8 +70,8 @@ class OnboardingService
   private
 
   def generate_username(display_name)
-    base = display_name.downcase.gsub(/[^a-z0-9]/, '_').squeeze('_').gsub(/^_|_$/, '')
-    base = 'user' if base.blank?
+    base = display_name.downcase.gsub(/[^a-z0-9]/, "_").squeeze("_").gsub(/^_|_$/, "")
+    base = "user" if base.blank?
     "#{base}_#{SecureRandom.hex(4)}"
   end
 
@@ -80,7 +80,7 @@ class OnboardingService
       user_id: user.id,
       exp: 30.days.from_now.to_i
     }
-    JWT.encode(payload, ENV.fetch('JWT_SECRET', 'development_jwt_secret'), 'HS256')
+    JWT.encode(payload, ENV.fetch("JWT_SECRET", "development_jwt_secret"), "HS256")
   end
 
   class InvalidInviteError < StandardError; end

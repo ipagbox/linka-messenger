@@ -3,11 +3,11 @@ module Api
     class SessionsController < ApplicationController
       include Authenticatable
 
-      skip_before_action :authenticate!, only: [:create]
+      skip_before_action :authenticate!, only: [ :create ]
 
       def create
         user = User.find_by(matrix_user_id: params[:matrix_user_id])
-        return render json: { error: 'Invalid credentials' }, status: :unauthorized unless user
+        return render json: { error: "Invalid credentials" }, status: :unauthorized unless user
 
         token = generate_token(user)
         render json: {
@@ -22,7 +22,7 @@ module Api
       end
 
       def destroy
-        render json: { message: 'Logged out' }
+        render json: { message: "Logged out" }
       end
     end
   end

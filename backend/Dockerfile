@@ -26,7 +26,9 @@ COPY . .
 FROM base
 
 RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    mkdir -p /rails/tmp/pids /rails/tmp/cache /rails/tmp/sockets /rails/log && \
+    chown -R rails:rails /rails/tmp /rails/log
 USER 1000:1000
 
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"

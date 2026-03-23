@@ -71,6 +71,12 @@ bundle exec rspec    # Тесты
 bundle exec rubocop  # Lint
 ```
 
+### E2E-тесты
+
+```bash
+npx playwright test
+```
+
 ### Всё через Docker
 
 ```bash
@@ -83,11 +89,22 @@ docker compose down           # Остановка
 
 | Компонент | Технология |
 |-----------|-----------|
-| Frontend | React, TypeScript, Vite, Zustand, matrix-js-sdk |
-| Backend | Ruby on Rails (API mode), PostgreSQL |
+| Frontend | React 18, TypeScript, Vite, Zustand, matrix-js-sdk |
+| Backend | Ruby on Rails 7.1+ (API mode), PostgreSQL |
 | Messaging | Matrix Synapse |
-| Infrastructure | Docker Compose, Nginx, Let's Encrypt, coturn |
-| E2E тесты | Playwright |
+| Infrastructure | Docker Compose, Nginx, Let's Encrypt, coturn, Redis |
+| Тесты | Vitest, RSpec, Playwright |
+
+## Структура проекта
+
+```
+frontend/          — React PWA
+backend/           — Rails API (control plane)
+infrastructure/    — Docker, Nginx, Synapse configs
+e2e/               — Playwright E2E тесты
+scripts/           — Утилиты
+docs/              — Документация
+```
 
 ## Лицензия
 

@@ -370,13 +370,14 @@ TMPNGINX
     sleep 3
 
     info "Запрос сертификата у Let's Encrypt..."
-    docker compose -f docker-compose.production.yml run --rm certbot \
+    docker compose -f docker-compose.production.yml run --rm --entrypoint "" certbot \
         certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
         --email "$EMAIL" \
         --agree-tos \
         --no-eff-email \
+        --non-interactive \
         -d "$DOMAIN"
 
     if [ $? -ne 0 ]; then

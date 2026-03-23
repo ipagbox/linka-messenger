@@ -1,0 +1,21 @@
+.receipt {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: -4px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bg-primary);
+}

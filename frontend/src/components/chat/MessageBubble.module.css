@@ -1,0 +1,96 @@
+.wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.own {
+  flex-direction: row-reverse;
+}
+
+.other {
+  flex-direction: row;
+}
+
+.avatar {
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+
+.bubble {
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.own .bubble {
+  align-items: flex-end;
+  border-right: 3px solid var(--accent-primary);
+  padding-right: 10px;
+}
+
+.other .bubble {
+  align-items: flex-start;
+  border-left: 3px solid var(--border-default);
+  padding-left: 10px;
+}
+
+.senderName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.body {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background-color: var(--bg-tertiary);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.own .body {
+  background-color: rgba(99, 102, 241, 0.15);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.status {
+  font-size: 11px;
+}
+
+.sending {
+  color: var(--text-muted);
+}
+
+.sent {
+  color: var(--accent-success);
+}
+
+.error {
+  color: var(--accent-error);
+}
+
+.retryBtn {
+  font-size: 11px;
+  color: var(--accent-error);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}

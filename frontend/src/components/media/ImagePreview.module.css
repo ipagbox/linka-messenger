@@ -1,0 +1,33 @@
+.thumbnail {
+  cursor: zoom-in;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 300px;
+}
+
+.img {
+  display: block;
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  cursor: zoom-out;
+  padding: 24px;
+}
+
+.lightboxImg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}

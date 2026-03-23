@@ -1,0 +1,23 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.link {
+  flex: 1;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: monospace;
+  word-break: break-all;
+  color: var(--accent-primary);
+}

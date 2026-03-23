@@ -67,6 +67,7 @@ services:
     depends_on:
       - db-rails
       - redis
+      - synapse
     networks:
       - linka-net
 

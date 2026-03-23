@@ -445,10 +445,21 @@ wait_for_ready() {
         sleep 2
     done
 
-    # Seed базы (admin)
-    info "Инициализация базы данных..."
-    docker compose -f docker-compose.production.yml exec -T backend \
-        bundle exec rails db:prepare db:seed 2>&1 | tail -5 || true
+    # Entrypoint ждёт Synapse и выполняет db:prepare + db:seed автоматически.
+    # Проверяем, что admin создан.
+    info "Проверка создания администратора..."
+    for i in $(seq 1 15); do
+        ADMIN_CHECK=$(docker compose -f docker-compose.production.yml exec -T backend \
+            bundle exec rails runner "puts User.find_by(matrix_user_id: '@admin:${DOMAIN}')&.matrix_user_id || 'NOT_FOUND'" 2>/dev/null || echo "NOT_READY")
+        if echo "$ADMIN_CHECK" | grep -q "@admin:"; then
+            ok "Администратор создан: @admin:${DOMAIN}"
+            break
+        fi
+        if [ "$i" -eq 15 ]; then
+            warn "Админ ещё не создан. Перезапустите backend: docker compose -f docker-compose.production.yml restart backend"
+        fi
+        sleep 4
+    done
 }
 
 # ─── Итоговая информация ─────────────────────────────────────────────
@@ -457,9 +468,10 @@ show_result() {
 
     echo -e "${GREEN}${BOLD}Linka Messenger успешно установлен!${NC}"
     echo ""
-    echo -e "  ${BOLD}URL:${NC}         https://${DOMAIN}"
-    echo -e "  ${BOLD}Логин:${NC}       Admin"
-    echo -e "  ${BOLD}Установка:${NC}   ${INSTALL_DIR}"
+    echo -e "  ${BOLD}URL:${NC}             https://${DOMAIN}"
+    echo -e "  ${BOLD}Matrix User ID:${NC}  @admin:${DOMAIN}"
+    echo -e "  ${BOLD}Пароль:${NC}          (тот, что вы указали при установке)"
+    echo -e "  ${BOLD}Установка:${NC}       ${INSTALL_DIR}"
     echo ""
     echo -e "${CYAN}Полезные команды:${NC}"
     echo -e "  cd ${INSTALL_DIR}"
@@ -467,7 +479,7 @@ show_result() {
     echo -e "  docker compose -f docker-compose.production.yml restart    # Перезапуск"
     echo -e "  docker compose -f docker-compose.production.yml down       # Остановка"
     echo ""
-    echo -e "${YELLOW}Откройте https://${DOMAIN} в браузере и войдите с паролем администратора.${NC}"
+    echo -e "${YELLOW}Откройте https://${DOMAIN} и войдите как @admin:${DOMAIN}${NC}"
     echo ""
 }
 

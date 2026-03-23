@@ -3,7 +3,7 @@
 # Linka Messenger — установка на чистый VPS (Debian/Ubuntu)
 #
 # Запуск одной строкой:
-#   bash <(curl -sSL https://raw.githubusercontent.com/ipagbox/linka-messenger/main/install.sh)
+#   curl -fsSL https://raw.githubusercontent.com/ipagbox/linka-messenger/main/install.sh -o /tmp/linka-install.sh && sudo bash /tmp/linka-install.sh
 #
 # Или если уже клонирован репозиторий:
 #   sudo bash install.sh

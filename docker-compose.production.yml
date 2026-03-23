@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  db-rails:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: linka
+      POSTGRES_PASSWORD: ${RAILS_DB_PASSWORD}
+      POSTGRES_DB: linka_production
+    volumes:
+      - db-rails-data:/var/lib/postgresql/data
+    networks:
+      - linka-net
+
+  db-synapse:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: ${SYNAPSE_DB_PASSWORD}
+      POSTGRES_DB: synapse
+    volumes:
+      - db-synapse-data:/var/lib/postgresql/data
+    networks:
+      - linka-net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - linka-net
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    restart: unless-stopped
+    environment:
+      SYNAPSE_CONFIG_PATH: /data/homeserver.yaml
+    volumes:
+      - synapse-data:/data
+      - ./infrastructure/synapse/homeserver.production.yaml:/data/config/homeserver.yaml:ro
+      - ./infrastructure/synapse/log.config:/data/config/log.config:ro
+    depends_on:
+      - db-synapse
+    networks:
+      - linka-net
+    command: run --config-path /data/config/homeserver.yaml
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: postgres://linka:${RAILS_DB_PASSWORD}@db-rails:5432/linka_production
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET: ${JWT_SECRET}
+      MATRIX_HOMESERVER_URL: http://synapse:8008
+      MATRIX_SERVER_NAME: ${DOMAIN}
+      SYNAPSE_ADMIN_TOKEN: ${SYNAPSE_SHARED_SECRET}
+      ADMIN_DISPLAY_NAME: Admin
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      REDIS_URL: redis://redis:6379/0
+      FRONTEND_URL: https://${DOMAIN}
+      RAILS_LOG_TO_STDOUT: "true"
+    depends_on:
+      - db-rails
+      - redis
+    networks:
+      - linka-net
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    networks:
+      - linka-net
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/production.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-etc:/etc/letsencrypt:ro
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    depends_on:
+      - frontend
+      - backend
+      - synapse
+    networks:
+      - linka-net
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+    networks:
+      - linka-net
+
+volumes:
+  db-rails-data:
+  db-synapse-data:
+  synapse-data:
+  redis-data:
+  certbot-etc:
+  certbot-var:
+  certbot-webroot:
+
+networks:
+  linka-net:
+    driver: bridge

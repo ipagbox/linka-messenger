@@ -1,0 +1,35 @@
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--bg-tertiary);
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 120ms ease;
+}
+
+.btn:hover {
+  background-color: var(--bg-hover);
+}
+
+.btn.active {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.hangup {
+  background-color: var(--accent-error);
+}
+
+.hangup:hover {
+  background-color: #dc2626;
+}

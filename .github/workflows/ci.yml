@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: linka
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: linka_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      DB_HOST: localhost
+      DB_USERNAME: linka
+      DB_PASSWORD: password
+      SECRET_KEY_BASE: test_secret_key_base_min_64_chars_padding_padding_padding_padding
+      JWT_SECRET: test_jwt_secret
+      MATRIX_URL: http://localhost:8008
+      SYNAPSE_ADMIN_TOKEN: test_token
+      MATRIX_SERVER_NAME: localhost
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: backend
+
+      - name: Setup database
+        working-directory: backend
+        run: bundle exec rails db:create db:migrate
+
+      - name: Run RSpec
+        working-directory: backend
+        run: bundle exec rspec --format progress
+
+      - name: Run Rubocop
+        working-directory: backend
+        run: bundle exec rubocop --parallel
+
+  frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run tests
+        working-directory: frontend
+        run: npm test -- --run
+
+      - name: TypeScript check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build

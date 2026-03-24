@@ -31,4 +31,39 @@ RSpec.describe MatrixAdminService, type: :service do
       expect(token).to eq('test_token_123')
     end
   end
+
+  describe '#admin_headers' do
+    around do |example|
+      original_admin_token = ENV["SYNAPSE_ADMIN_TOKEN"]
+      original_admin_password = ENV["ADMIN_PASSWORD"]
+      original_shared_secret = ENV["SYNAPSE_SHARED_SECRET"]
+
+      ENV["SYNAPSE_ADMIN_TOKEN"] = nil
+      ENV["ADMIN_PASSWORD"] = "new-rotated-password"
+      ENV["SYNAPSE_SHARED_SECRET"] = "shared-secret"
+
+      example.run
+    ensure
+      ENV["SYNAPSE_ADMIN_TOKEN"] = original_admin_token
+      ENV["ADMIN_PASSWORD"] = original_admin_password
+      ENV["SYNAPSE_SHARED_SECRET"] = original_shared_secret
+    end
+
+    it 'falls back to shared-secret bootstrap when admin login fails' do
+      stub_request(:post, "#{MatrixStubs::MATRIX_URL}/_matrix/client/v3/login")
+        .with(body: /"user":"@admin:#{MatrixStubs::SERVER_NAME}".*new-rotated-password/)
+        .to_return(status: 401, body: { errcode: "M_FORBIDDEN" }.to_json)
+
+      stub_request(:post, "#{MatrixStubs::MATRIX_URL}/_matrix/client/v3/login")
+        .with(body: /"user":"@seed_admin_/)
+        .to_return(status: 200, body: { access_token: "bootstrap_token" }.to_json)
+
+      stub_matrix_create_user("bootstrap_admin")
+      stub_request(:post, /#{Regexp.escape(MatrixStubs::MATRIX_URL)}\/_synapse\/admin\/v1\/deactivate\/.*/)
+        .to_return(status: 200, body: { id_server_unbind_result: "success" }.to_json)
+
+      headers = service.admin_headers
+      expect(headers["Authorization"]).to eq("Bearer bootstrap_token")
+    end
+  end
 end

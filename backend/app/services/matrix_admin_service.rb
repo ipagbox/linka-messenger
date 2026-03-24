@@ -195,15 +195,46 @@ class MatrixAdminService
   def admin_access_token
     @admin_access_token ||= begin
       env_token = ENV["SYNAPSE_ADMIN_TOKEN"]
-      if env_token.present?
-        env_token
-      else
-        admin_password = ENV.fetch("ADMIN_PASSWORD", "")
-        raise MatrixError, "ADMIN_PASSWORD is not configured" if admin_password.blank?
+      return env_token if env_token.present?
 
-        login_with_password("@admin:#{server_name}", admin_password)["access_token"]
+      admin_password = ENV.fetch("ADMIN_PASSWORD", "")
+      if admin_password.present?
+        begin
+          return login_with_password("@admin:#{server_name}", admin_password)["access_token"]
+        rescue MatrixError
+          # Fall through to shared-secret bootstrap path so password rotation can recover.
+        end
       end
+
+      bootstrap_admin_access_token
     end
+  end
+
+  def bootstrap_admin_access_token
+    raise MatrixError, "SYNAPSE_SHARED_SECRET is not configured" if @shared_secret.blank?
+
+    temp_username = "seed_admin_#{SecureRandom.hex(6)}"
+    temp_display_name = "Seed Admin Recovery"
+    temp_password = SecureRandom.hex(24)
+    temp_user_id = "@#{temp_username}:#{server_name}"
+
+    create_user(temp_username, temp_display_name, temp_password, admin: true)
+    temp_access_token = login_with_password(temp_user_id, temp_password)["access_token"]
+    deactivate_bootstrap_user(temp_user_id, temp_access_token)
+
+    temp_access_token
+  end
+
+  def deactivate_bootstrap_user(user_id, access_token)
+    response = self.class.post(
+      "#{@base_url}/_synapse/admin/v1/deactivate/#{URI.encode_www_form_component(user_id)}",
+      headers: {
+        "Authorization" => "Bearer #{access_token}",
+        "Content-Type" => "application/json"
+      },
+      body: { erase: true }.to_json
+    )
+    raise MatrixError, "Failed to clean up bootstrap admin user: #{response.body}" unless response.success?
   end
 
   class MatrixError < StandardError; end

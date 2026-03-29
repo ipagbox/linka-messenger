@@ -2,8 +2,10 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useChatStore } from '../../store/chatStore'
 import { useAuthStore } from '../../store/authStore'
+import { useCircleStore } from '../../store/circleStore'
 import { getMatrixClient } from '../../matrix/client'
 import { sendTextMessage } from '../../matrix/messages'
+import { ensureRoomMembership, isNotInRoomError } from '../../matrix/membership'
 import { MessageBubble } from './MessageBubble'
 import { MessageInput } from './MessageInput'
 import { TypingIndicator } from './TypingIndicator'
@@ -14,6 +16,7 @@ export function ChatView() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { matrixUserId } = useAuthStore()
   const { messages, typingUsers, rooms, setActiveRoom, addMessage, replacePendingMessage, updateMessageStatus } = useChatStore()
+  const { circles } = useCircleStore()
 
   const roomMessages = roomId ? messages.get(roomId) || [] : []
   const typing = roomId ? typingUsers.get(roomId) || [] : []
@@ -23,6 +26,17 @@ export function ChatView() {
     if (roomId) setActiveRoom(roomId)
     return () => setActiveRoom(null)
   }, [roomId, setActiveRoom])
+
+  // Proactively ensure room membership when entering chat
+  useEffect(() => {
+    if (!roomId) return
+    const client = getMatrixClient()
+    if (!client) return
+
+    ensureRoomMembership(client, roomId, circles).catch((err) =>
+      console.warn('Proactive room join check failed:', err)
+    )
+  }, [roomId, circles])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -54,10 +68,23 @@ export function ChatView() {
       const eventId = await sendTextMessage(client, roomId, text)
       replacePendingMessage(roomId, pendingId, eventId)
     } catch (err) {
+      if (isNotInRoomError(err)) {
+        console.warn('Not in room, attempting to join via backend...')
+        const joined = await ensureRoomMembership(client, roomId, circles)
+        if (joined) {
+          try {
+            const eventId = await sendTextMessage(client, roomId, text)
+            replacePendingMessage(roomId, pendingId, eventId)
+            return
+          } catch (retryErr) {
+            console.error('Failed to send message after rejoin:', retryErr)
+          }
+        }
+      }
       console.error('Failed to send message:', err)
       updateMessageStatus(roomId, pendingId, 'error')
     }
-  }, [roomId, matrixUserId, addMessage, replacePendingMessage, updateMessageStatus])
+  }, [roomId, matrixUserId, circles, addMessage, replacePendingMessage, updateMessageStatus])
 
   if (!roomId) return null
 

@@ -31,12 +31,10 @@ elsif admin_password.present?
   rescue MatrixAdminService::MatrixError => e
     # User might already exist — try to reset password via admin API
     begin
+      admin_headers = matrix_service.admin_headers
       response = HTTParty.put(
         "#{ENV.fetch('MATRIX_HOMESERVER_URL', 'http://synapse:8008')}/_synapse/admin/v2/users/#{URI.encode_www_form_component(admin_matrix_id)}",
-        headers: {
-          'Authorization' => "Bearer #{ENV.fetch('SYNAPSE_ADMIN_TOKEN', '')}",
-          'Content-Type' => 'application/json'
-        },
+        headers: admin_headers,
         body: { password: admin_password, admin: true }.to_json
       )
       if response.success?

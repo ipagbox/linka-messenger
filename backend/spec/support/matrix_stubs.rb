@@ -3,16 +3,21 @@ module MatrixStubs
   SERVER_NAME = ENV.fetch('MATRIX_SERVER_NAME', 'localhost')
 
   def stub_matrix_create_user(username = nil, response = {})
-    url = if username.nil? || username.is_a?(Regexp)
-      /#{Regexp.escape(MATRIX_URL)}\/_synapse\/admin\/v2\/users\//
-    else
-      user_id = "@#{username}:#{SERVER_NAME}"
-      "#{MATRIX_URL}/_synapse/admin/v2/users/#{URI.encode_www_form_component(user_id)}"
-    end
-    stub_request(:put, url)
+    stub_request(:get, "#{MATRIX_URL}/_synapse/admin/v1/register")
       .to_return(
         status: 200,
-        body: { name: "@user:#{SERVER_NAME}", admin: false, deactivated: false }.merge(response).to_json,
+        body: { nonce: "test-nonce" }.to_json,
+        headers: { 'Content-Type' => 'application/json' }
+      )
+
+    stub_request(:post, "#{MATRIX_URL}/_synapse/admin/v1/register")
+      .to_return(
+        status: 200,
+        body: {
+          user_id: "@#{username || 'user'}:#{SERVER_NAME}",
+          access_token: "syt_#{SecureRandom.hex(16)}",
+          device_id: "DEVICE123"
+        }.merge(response).to_json,
         headers: { 'Content-Type' => 'application/json' }
       )
   end
@@ -72,8 +77,14 @@ module MatrixStubs
   end
 
   def stub_matrix_create_user_failure(username, status = 500)
-    user_id = "@#{username}:#{SERVER_NAME}"
-    stub_request(:put, "#{MATRIX_URL}/_synapse/admin/v2/users/#{URI.encode_www_form_component(user_id)}")
+    stub_request(:get, "#{MATRIX_URL}/_synapse/admin/v1/register")
+      .to_return(
+        status: 200,
+        body: { nonce: "test-nonce" }.to_json,
+        headers: { 'Content-Type' => 'application/json' }
+      )
+
+    stub_request(:post, "#{MATRIX_URL}/_synapse/admin/v1/register")
       .to_return(
         status: status,
         body: { errcode: 'M_UNKNOWN', error: 'Server error' }.to_json,

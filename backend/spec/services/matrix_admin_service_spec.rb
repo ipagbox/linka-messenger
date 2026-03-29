@@ -31,4 +31,34 @@ RSpec.describe MatrixAdminService, type: :service do
       expect(token).to eq('test_token_123')
     end
   end
+
+  describe '#admin_headers' do
+    before do
+      allow(ENV).to receive(:fetch).and_call_original
+      allow(ENV).to receive(:fetch).with('ADMIN_PASSWORD', '').and_return('admin_password_123')
+      allow(ENV).to receive(:fetch).with('ADMIN_DISPLAY_NAME', 'Admin').and_return('Admin')
+      allow(ENV).to receive(:fetch).with('MATRIX_SERVER_NAME', 'localhost').and_return('localhost')
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with('SYNAPSE_ADMIN_TOKEN').and_return(nil)
+    end
+
+    it 'falls back to shared-secret bootstrap when admin login fails' do
+      expect(service).to receive(:login_with_password)
+        .with('@admin:localhost', 'admin_password_123')
+        .ordered
+        .and_raise(MatrixAdminService::MatrixError, 'Invalid credentials')
+      expect(service).to receive(:create_user)
+        .with('admin', 'Admin', 'admin_password_123', admin: true)
+        .ordered
+        .and_return({})
+      expect(service).to receive(:login_with_password)
+        .with('@admin:localhost', 'admin_password_123')
+        .ordered
+        .and_return({ 'access_token' => 'syt_bootstrap_token' })
+
+      headers = service.admin_headers
+      expect(headers['Authorization']).to eq('Bearer syt_bootstrap_token')
+      expect(headers['Content-Type']).to eq('application/json')
+    end
+  end
 end

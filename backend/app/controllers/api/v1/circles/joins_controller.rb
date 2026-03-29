@@ -1,7 +1,7 @@
 module Api
   module V1
     module Circles
-      class JoinController < ApplicationController
+      class JoinsController < ApplicationController
         include Authenticatable
 
         def create

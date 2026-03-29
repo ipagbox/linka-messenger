@@ -10,7 +10,7 @@ class OnboardingService
 
     ActiveRecord::Base.transaction do
       begin
-        matrix_response = matrix_service.create_user(username, display_name, password)
+        matrix_service.create_user(username, display_name, password)
       rescue MatrixAdminService::MatrixError => e
         raise MatrixError, "Matrix user creation failed: #{e.message}"
       end
@@ -20,21 +20,19 @@ class OnboardingService
         display_name: display_name
       )
 
-      InviteService.new.consume(token, user)
-
       begin
         login_result = matrix_service.login_with_password(user.matrix_user_id, password)
         access_token = login_result["access_token"]
         device_id = login_result["device_id"]
 
-        [ invite.circle.matrix_general_room_id, invite.circle.matrix_announcements_room_id ].compact.each do |room_id|
+        required_room_ids = [ invite.circle.matrix_general_room_id, invite.circle.matrix_announcements_room_id ].compact
+        required_room_ids.each do |room_id|
           matrix_service.join_room(user.matrix_user_id, room_id)
-        rescue MatrixAdminService::MatrixError
-          # Non-fatal: room join failure
         end
+
+        InviteService.new.consume(token, user)
       rescue MatrixAdminService::MatrixError => e
-        access_token = nil
-        device_id = nil
+        raise MatrixError, "Matrix provisioning failed: #{e.message}"
       end
 
       rails_token = generate_rails_token(user)

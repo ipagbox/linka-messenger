@@ -5,18 +5,34 @@ import { InvitePage } from './components/auth/InvitePage'
 import { OnboardingPage } from './components/auth/OnboardingPage'
 import { LoginPage } from './components/auth/LoginPage'
 import { ChatView } from './components/chat/ChatView'
+import { ChatList } from './components/chat/ChatList'
 import { CircleList } from './components/circles/CircleList'
 import { CircleView } from './components/circles/CircleView'
 import { SettingsPage } from './components/settings/SettingsPage'
 import { IncomingCall } from './components/calls/IncomingCall'
 import { CallView } from './components/calls/CallView'
+import { useChatStore } from './store/chatStore'
 
 function Home() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '14px' }}>
-      Select a chat to start messaging
-    </div>
-  )
+  const { rooms, isSyncing } = useChatStore()
+
+  if (isSyncing) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '14px' }}>
+        Connecting...
+      </div>
+    )
+  }
+
+  if (rooms.length === 0) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '14px' }}>
+        No chats yet. Join a circle to start messaging.
+      </div>
+    )
+  }
+
+  return <ChatList rooms={rooms} />
 }
 
 export default function App() {

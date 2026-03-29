@@ -1,25 +1,38 @@
 import { create } from 'zustand'
-import type { Message } from '../types'
+import type { Message, ChatRoom } from '../types'
 
 interface ChatState {
+  rooms: ChatRoom[]
   messages: Map<string, Message[]>
   pendingMessages: Message[]
   typingUsers: Map<string, string[]>
   activeRoomId: string | null
+  isSyncing: boolean
 
+  setRooms: (rooms: ChatRoom[]) => void
   setActiveRoom: (roomId: string | null) => void
   addMessage: (roomId: string, message: Message) => void
+  replacePendingMessage: (roomId: string, pendingId: string, serverEventId: string) => void
   updateMessageStatus: (roomId: string, messageId: string, status: Message['status']) => void
   setMessages: (roomId: string, messages: Message[]) => void
   setTypingUsers: (roomId: string, userIds: string[]) => void
   getMessages: (roomId: string) => Message[]
+  setSyncing: (syncing: boolean) => void
+  findDMRoom: (userId: string) => ChatRoom | undefined
+  reset: () => void
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
+  rooms: [],
   messages: new Map(),
   pendingMessages: [],
   typingUsers: new Map(),
   activeRoomId: null,
+  isSyncing: false,
+
+  setRooms: (rooms) => set({ rooms }),
+
+  setSyncing: (syncing) => set({ isSyncing: syncing }),
 
   setActiveRoom: (roomId) => set({ activeRoomId: roomId }),
 
@@ -27,9 +40,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set((state) => {
       const messages = new Map(state.messages)
       const existing = messages.get(roomId) || []
-      // Avoid duplicates
+      // Avoid duplicates by id or by matching body+sender+timestamp for pending messages
       if (!existing.find((m) => m.id === message.id)) {
         messages.set(roomId, [...existing, message])
+      }
+      return { messages }
+    })
+  },
+
+  replacePendingMessage: (roomId, pendingId, serverEventId) => {
+    set((state) => {
+      const messages = new Map(state.messages)
+      const existing = messages.get(roomId) || []
+      const hasSyncCopy = existing.some((m) => m.id === serverEventId)
+
+      if (hasSyncCopy) {
+        // Sync event already arrived — just drop the pending message
+        messages.set(roomId, existing.filter((m) => m.id !== pendingId))
+      } else {
+        // Rename pending → server ID so future sync dedups against it
+        messages.set(
+          roomId,
+          existing.map((m) =>
+            m.id === pendingId ? { ...m, id: serverEventId, status: 'sent' as const } : m
+          )
+        )
       }
       return { messages }
     })
@@ -66,4 +101,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
   getMessages: (roomId) => {
     return get().messages.get(roomId) || []
   },
+
+  findDMRoom: (userId) => {
+    return get().rooms.find((r) => r.isDM && r.members?.includes(userId))
+  },
+
+  reset: () => set({
+    rooms: [],
+    messages: new Map(),
+    pendingMessages: [],
+    typingUsers: new Map(),
+    activeRoomId: null,
+    isSyncing: false,
+  }),
 }))

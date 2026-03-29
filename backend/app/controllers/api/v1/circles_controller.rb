@@ -39,6 +39,8 @@ module Api
           id: circle.id,
           name: circle.name,
           matrix_space_id: circle.matrix_space_id,
+          matrix_general_room_id: circle.matrix_general_room_id,
+          matrix_announcements_room_id: circle.matrix_announcements_room_id,
           max_members: circle.max_members,
           member_count: circle.member_count,
           creator: circle.creator ? { id: circle.creator.id, display_name: circle.creator.display_name } : nil,

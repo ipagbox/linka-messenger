@@ -20,8 +20,3 @@ export async function getCircleMembers(circleId: number) {
   const response = await apiClient.get(`/circles/${circleId}/members`)
   return response.data
 }
-
-export async function joinCircleRooms(circleId: number): Promise<{ joined_rooms: string[]; errors: Array<{ room_id: string; error: string }> }> {
-  const response = await apiClient.post(`/circles/${circleId}/join`)
-  return response.data
-}

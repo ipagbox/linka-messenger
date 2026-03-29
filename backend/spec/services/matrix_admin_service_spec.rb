@@ -30,6 +30,15 @@ RSpec.describe MatrixAdminService, type: :service do
       token = service.get_user_access_token('testuser')
       expect(token).to eq('test_token_123')
     end
+
+    it 'returns current admin token for admin user without admin login impersonation' do
+      allow(service).to receive(:admin_access_token).and_return('admin_token_123')
+      expect(service).not_to receive(:post)
+
+      token = service.get_user_access_token('admin')
+
+      expect(token).to eq('admin_token_123')
+    end
   end
 
   describe '#admin_headers' do

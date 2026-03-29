@@ -113,6 +113,8 @@ class MatrixAdminService
 
   def get_user_access_token(username)
     user_id = "@#{username}:#{server_name}"
+    return admin_access_token if user_id == "@admin:#{server_name}"
+
     response = post(
       "/_synapse/admin/v1/users/#{URI.encode_www_form_component(user_id)}/login",
       {}

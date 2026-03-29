@@ -13,7 +13,7 @@ export function ChatView() {
   const { roomId } = useParams<{ roomId: string }>()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { matrixUserId } = useAuthStore()
-  const { messages, typingUsers, rooms, setActiveRoom, addMessage, updateMessageStatus } = useChatStore()
+  const { messages, typingUsers, rooms, setActiveRoom, addMessage, replacePendingMessage, updateMessageStatus } = useChatStore()
 
   const roomMessages = roomId ? messages.get(roomId) || [] : []
   const typing = roomId ? typingUsers.get(roomId) || [] : []
@@ -51,13 +51,13 @@ export function ChatView() {
     }
 
     try {
-      await sendTextMessage(client, roomId, text)
-      updateMessageStatus(roomId, pendingId, 'sent')
+      const eventId = await sendTextMessage(client, roomId, text)
+      replacePendingMessage(roomId, pendingId, eventId)
     } catch (err) {
       console.error('Failed to send message:', err)
       updateMessageStatus(roomId, pendingId, 'error')
     }
-  }, [roomId, matrixUserId, addMessage, updateMessageStatus])
+  }, [roomId, matrixUserId, addMessage, replacePendingMessage, updateMessageStatus])
 
   if (!roomId) return null
 

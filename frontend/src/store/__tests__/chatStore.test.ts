@@ -82,6 +82,27 @@ describe('chatStore', () => {
     expect(useChatStore.getState().findDMRoom('@bob:localhost')).toBeUndefined()
   })
 
+  it('replaces pending message with server event id', () => {
+    const msg = makeMessage('pending-123', 'room-a')
+    useChatStore.getState().addMessage('room-a', { ...msg, status: 'sending' })
+    useChatStore.getState().replacePendingMessage('room-a', 'pending-123', '$server-event-id')
+
+    const messages = useChatStore.getState().getMessages('room-a')
+    expect(messages).toHaveLength(1)
+    expect(messages[0].id).toBe('$server-event-id')
+    expect(messages[0].status).toBe('sent')
+  })
+
+  it('prevents duplicate when sync delivers event after pending replace', () => {
+    const msg = makeMessage('pending-123', 'room-a')
+    useChatStore.getState().addMessage('room-a', { ...msg, status: 'sending' })
+    useChatStore.getState().replacePendingMessage('room-a', 'pending-123', '$evt1')
+
+    // Sync delivers same event
+    useChatStore.getState().addMessage('room-a', { ...msg, id: '$evt1' })
+    expect(useChatStore.getState().getMessages('room-a')).toHaveLength(1)
+  })
+
   it('tracks syncing state', () => {
     useChatStore.getState().setSyncing(true)
     expect(useChatStore.getState().isSyncing).toBe(true)

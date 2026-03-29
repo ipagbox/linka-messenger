@@ -12,6 +12,7 @@ interface ChatState {
   setRooms: (rooms: ChatRoom[]) => void
   setActiveRoom: (roomId: string | null) => void
   addMessage: (roomId: string, message: Message) => void
+  replacePendingMessage: (roomId: string, pendingId: string, serverEventId: string) => void
   updateMessageStatus: (roomId: string, messageId: string, status: Message['status']) => void
   setMessages: (roomId: string, messages: Message[]) => void
   setTypingUsers: (roomId: string, userIds: string[]) => void
@@ -38,10 +39,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set((state) => {
       const messages = new Map(state.messages)
       const existing = messages.get(roomId) || []
-      // Avoid duplicates
+      // Avoid duplicates by id or by matching body+sender+timestamp for pending messages
       if (!existing.find((m) => m.id === message.id)) {
         messages.set(roomId, [...existing, message])
       }
+      return { messages }
+    })
+  },
+
+  replacePendingMessage: (roomId, pendingId, serverEventId) => {
+    set((state) => {
+      const messages = new Map(state.messages)
+      const existing = messages.get(roomId) || []
+      messages.set(
+        roomId,
+        existing.map((m) =>
+          m.id === pendingId ? { ...m, id: serverEventId, status: 'sent' as const } : m
+        )
+      )
       return { messages }
     })
   },

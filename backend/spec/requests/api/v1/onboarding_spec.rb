@@ -44,5 +44,20 @@ RSpec.describe 'Onboarding API', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
       end
     end
+
+    context 'when matrix room join fails' do
+      it 'returns 503 and does not consume invite' do
+        stub_request(:post, /#{Regexp.escape(MatrixStubs::MATRIX_URL)}\/_synapse\/admin\/v1\/join\//)
+          .to_return(
+            status: 403,
+            body: { errcode: 'M_FORBIDDEN', error: 'User not in room' }.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+
+        post '/api/v1/onboarding', params: { token: @token, display_name: 'New User' }
+        expect(response).to have_http_status(:service_unavailable)
+        expect(invite.reload.uses_count).to eq(0)
+      end
+    end
   end
 end

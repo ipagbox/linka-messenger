@@ -51,6 +51,19 @@ RSpec.describe OnboardingService, type: :service do
       expect(circle.has_member?(user)).to be true
     end
 
+    it 'fails onboarding when matrix room join fails' do
+      stub_request(:post, /#{Regexp.escape(MatrixStubs::MATRIX_URL)}\/_synapse\/admin\/v1\/join\//)
+        .to_return(
+          status: 403,
+          body: { errcode: 'M_FORBIDDEN', error: 'User not in room' }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+
+      expect { service.register(token: @token, display_name: 'Test User') }
+        .to raise_error(OnboardingService::MatrixError, /Matrix provisioning failed/)
+      expect(invite.reload.uses_count).to eq(0)
+    end
+
     it 'raises InvalidInviteError for expired invite' do
       invite.update!(expires_at: 1.day.ago)
       expect { service.register(token: @token, display_name: 'Test User') }

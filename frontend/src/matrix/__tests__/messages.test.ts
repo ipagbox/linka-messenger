@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { sendTextMessage, sendTyping, matrixEventToMessage } from '../messages'
+import { sendTextMessage, sendTyping, matrixEventToMessage, isNotInRoomError } from '../messages'
 import type { MatrixClient, MatrixEvent } from 'matrix-js-sdk'
 
 describe('Matrix messages', () => {
@@ -53,5 +53,21 @@ describe('Matrix messages', () => {
 
     const message = matrixEventToMessage(mockEvent, mockClient)
     expect(message).toBeNull()
+  })
+
+  it('detects not-in-room forbidden error', () => {
+    const err = {
+      errcode: 'M_FORBIDDEN',
+      message: 'User @u:localhost not in room !r:localhost',
+    }
+    expect(isNotInRoomError(err)).toBe(true)
+  })
+
+  it('ignores unrelated forbidden error', () => {
+    const err = {
+      errcode: 'M_FORBIDDEN',
+      message: 'You are not allowed to send in this room',
+    }
+    expect(isNotInRoomError(err)).toBe(false)
   })
 })

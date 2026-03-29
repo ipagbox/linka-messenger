@@ -57,6 +57,9 @@ RSpec.describe 'Circle Join API', type: :request do
       before do
         create(:circle_membership, user: user, circle: circle)
         allow_any_instance_of(MatrixAdminService).to receive(:join_room)
+          .with(user.matrix_user_id, circle.matrix_space_id)
+          .and_return({})
+        allow_any_instance_of(MatrixAdminService).to receive(:join_room)
           .with(user.matrix_user_id, circle.matrix_general_room_id)
           .and_return({})
         allow_any_instance_of(MatrixAdminService).to receive(:join_room)

@@ -53,11 +53,7 @@ class OnboardingService
     username = "admin"
     matrix_service = MatrixAdminService.new
 
-    begin
-      matrix_service.create_user(username, display_name, password)
-    rescue MatrixAdminService::MatrixError
-      # Admin might already exist
-    end
+    matrix_service.create_user(username, display_name, password, admin: true)
 
     User.find_or_create_by!(
       matrix_user_id: "@#{username}:#{ENV.fetch('MATRIX_SERVER_NAME', 'localhost')}"

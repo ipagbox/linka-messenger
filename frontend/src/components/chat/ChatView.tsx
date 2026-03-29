@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useChatStore } from '../../store/chatStore'
 import { useAuthStore } from '../../store/authStore'
 import { getMatrixClient } from '../../matrix/client'
-import { sendTextMessage } from '../../matrix/messages'
+import { isNotInRoomError, sendTextMessage } from '../../matrix/messages'
 import { MessageBubble } from './MessageBubble'
 import { MessageInput } from './MessageInput'
 import { TypingIndicator } from './TypingIndicator'
@@ -54,7 +54,19 @@ export function ChatView() {
       const eventId = await sendTextMessage(client, roomId, text)
       replacePendingMessage(roomId, pendingId, eventId)
     } catch (err) {
-      console.error('Failed to send message:', err)
+      if (isNotInRoomError(err)) {
+        try {
+          await client.joinRoom(roomId)
+          const retryEventId = await sendTextMessage(client, roomId, text)
+          replacePendingMessage(roomId, pendingId, retryEventId)
+          return
+        } catch (retryErr) {
+          console.error('Failed to re-join room and resend message:', retryErr)
+        }
+      } else {
+        console.error('Failed to send message:', err)
+      }
+
       updateMessageStatus(roomId, pendingId, 'error')
     }
   }, [roomId, matrixUserId, addMessage, replacePendingMessage, updateMessageStatus])

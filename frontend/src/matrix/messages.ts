@@ -27,6 +27,16 @@ export async function sendTextMessage(client: MatrixClient, roomId: string, body
   return result.event_id
 }
 
+export function isNotInRoomError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+
+  const maybeError = error as { errcode?: string; message?: string; data?: { errcode?: string; error?: string }; toString?: () => string }
+  const errcode = maybeError.errcode ?? maybeError.data?.errcode
+  const text = [ maybeError.message, maybeError.data?.error, maybeError.toString?.() ].filter(Boolean).join(' ').toLowerCase()
+
+  return errcode === 'M_FORBIDDEN' && text.includes('not in room')
+}
+
 export async function sendTyping(client: MatrixClient, roomId: string, isTyping: boolean): Promise<void> {
   await client.sendTyping(roomId, isTyping, isTyping ? 5000 : 0)
 }

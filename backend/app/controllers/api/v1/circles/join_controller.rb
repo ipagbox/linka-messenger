@@ -17,7 +17,7 @@ module Api
           joined_rooms = []
           errors = []
 
-          [ circle.matrix_general_room_id, circle.matrix_announcements_room_id ].compact.each do |room_id|
+          [ circle.matrix_space_id, circle.matrix_general_room_id, circle.matrix_announcements_room_id ].compact.each do |room_id|
             matrix_service.join_room(current_user.matrix_user_id, room_id)
             joined_rooms << room_id
           rescue MatrixAdminService::MatrixError => e

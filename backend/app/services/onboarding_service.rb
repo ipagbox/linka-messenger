@@ -27,7 +27,7 @@ class OnboardingService
         access_token = login_result["access_token"]
         device_id = login_result["device_id"]
 
-        [ invite.circle.matrix_general_room_id, invite.circle.matrix_announcements_room_id ].compact.each do |room_id|
+        [ invite.circle.matrix_space_id, invite.circle.matrix_general_room_id, invite.circle.matrix_announcements_room_id ].compact.each do |room_id|
           join_room_with_retry(matrix_service, user.matrix_user_id, room_id)
         rescue MatrixAdminService::MatrixError => e
           Rails.logger.error("Failed to join user #{user.matrix_user_id} to room #{room_id}: #{e.message}")

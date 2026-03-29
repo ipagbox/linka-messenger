@@ -53,7 +53,7 @@ export function useMatrixSync(): { client: MatrixClient | null; isReady: boolean
   const clientRef = useRef<MatrixClient | null>(null)
   const isReadyRef = useRef(false)
   const { matrixAccessToken, matrixUserId, matrixDeviceId, isAuthenticated } = useAuthStore()
-  const { setRooms, addMessage, setMessages, setTypingUsers, setSyncing } = useChatStore()
+  const { setRooms, addMessage, setMessages, setTypingUsers, setSyncing, reset } = useChatStore()
 
   const refreshRooms = useCallback(() => {
     const client = clientRef.current
@@ -155,8 +155,9 @@ export function useMatrixSync(): { client: MatrixClient | null; isReady: boolean
       clientRef.current = null
       isReadyRef.current = false
       destroyMatrixClient()
+      reset()
     }
-  }, [isAuthenticated, matrixAccessToken, matrixUserId, matrixDeviceId, addMessage, setMessages, setTypingUsers, setSyncing, refreshRooms])
+  }, [isAuthenticated, matrixAccessToken, matrixUserId, matrixDeviceId, addMessage, setMessages, setTypingUsers, setSyncing, refreshRooms, reset])
 
   return { client: getMatrixClient(), isReady: isReadyRef.current }
 }

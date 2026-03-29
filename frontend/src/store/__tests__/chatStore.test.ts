@@ -103,6 +103,36 @@ describe('chatStore', () => {
     expect(useChatStore.getState().getMessages('room-a')).toHaveLength(1)
   })
 
+  it('drops pending when sync event arrived before replace', () => {
+    const msg = makeMessage('pending-123', 'room-a')
+    useChatStore.getState().addMessage('room-a', { ...msg, status: 'sending' })
+
+    // Sync delivers the real event before sendTextMessage resolves
+    useChatStore.getState().addMessage('room-a', { ...msg, id: '$evt1' })
+    expect(useChatStore.getState().getMessages('room-a')).toHaveLength(2)
+
+    // Now replace resolves — should drop pending, keep sync copy
+    useChatStore.getState().replacePendingMessage('room-a', 'pending-123', '$evt1')
+    const messages = useChatStore.getState().getMessages('room-a')
+    expect(messages).toHaveLength(1)
+    expect(messages[0].id).toBe('$evt1')
+  })
+
+  it('resets all state', () => {
+    useChatStore.getState().addMessage('room-a', makeMessage('1', 'room-a'))
+    useChatStore.getState().setRooms([{ id: 'r', name: 'R', unreadCount: 0, isDM: false, isGeneral: false, isAnnouncements: false }])
+    useChatStore.getState().setSyncing(true)
+    useChatStore.getState().setActiveRoom('room-a')
+
+    useChatStore.getState().reset()
+
+    const state = useChatStore.getState()
+    expect(state.rooms).toHaveLength(0)
+    expect(state.messages.size).toBe(0)
+    expect(state.activeRoomId).toBeNull()
+    expect(state.isSyncing).toBe(false)
+  })
+
   it('tracks syncing state', () => {
     useChatStore.getState().setSyncing(true)
     expect(useChatStore.getState().isSyncing).toBe(true)

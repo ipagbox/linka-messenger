@@ -100,9 +100,12 @@ export function useMatrixSync(): { client: MatrixClient | null; isReady: boolean
           }
         })
 
-        // Listen for new messages
+        // Listen for new messages (skip local echoes — ChatView handles optimistic display)
         client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined) => {
           if (!room || event.getType() !== 'm.room.message') return
+          // Local echoes have a non-null status (SENDING, ENCRYPTING, etc.)
+          // Only process server-confirmed events (status === null)
+          if (event.status !== null) return
 
           const message = matrixEventToMessage(event, client)
           if (message) {

@@ -1,25 +1,36 @@
 import { create } from 'zustand'
-import type { Message } from '../types'
+import type { Message, ChatRoom } from '../types'
 
 interface ChatState {
+  rooms: ChatRoom[]
   messages: Map<string, Message[]>
   pendingMessages: Message[]
   typingUsers: Map<string, string[]>
   activeRoomId: string | null
+  isSyncing: boolean
 
+  setRooms: (rooms: ChatRoom[]) => void
   setActiveRoom: (roomId: string | null) => void
   addMessage: (roomId: string, message: Message) => void
   updateMessageStatus: (roomId: string, messageId: string, status: Message['status']) => void
   setMessages: (roomId: string, messages: Message[]) => void
   setTypingUsers: (roomId: string, userIds: string[]) => void
   getMessages: (roomId: string) => Message[]
+  setSyncing: (syncing: boolean) => void
+  findDMRoom: (userId: string) => ChatRoom | undefined
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
+  rooms: [],
   messages: new Map(),
   pendingMessages: [],
   typingUsers: new Map(),
   activeRoomId: null,
+  isSyncing: false,
+
+  setRooms: (rooms) => set({ rooms }),
+
+  setSyncing: (syncing) => set({ isSyncing: syncing }),
 
   setActiveRoom: (roomId) => set({ activeRoomId: roomId }),
 
@@ -65,5 +76,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   getMessages: (roomId) => {
     return get().messages.get(roomId) || []
+  },
+
+  findDMRoom: (userId) => {
+    return get().rooms.find((r) => r.isDM && r.members?.includes(userId))
   },
 }))

@@ -29,7 +29,7 @@ describe('circleStore', () => {
   })
 
   it('gets active circle', () => {
-    const circle = { id: 1, name: 'Test', matrix_space_id: null, max_members: 15, member_count: 1, creator: null, created_at: '' }
+    const circle = { id: 1, name: 'Test', matrix_space_id: null, matrix_general_room_id: null, matrix_announcements_room_id: null, max_members: 15, member_count: 1, creator: null, created_at: '' }
     useCircleStore.setState({ circles: [circle], activeCircleId: 1 })
     expect(useCircleStore.getState().getActiveCircle()).toEqual(circle)
   })
@@ -37,7 +37,7 @@ describe('circleStore', () => {
   it('loads circles from API', async () => {
     const { getCircles } = await import('../../api/circles')
     const mockCircles = [
-      { id: 1, name: 'Circle 1', matrix_space_id: null, max_members: 15, member_count: 1, creator: null, created_at: '' },
+      { id: 1, name: 'Circle 1', matrix_space_id: null, matrix_general_room_id: null, matrix_announcements_room_id: null, max_members: 15, member_count: 1, creator: null, created_at: '' },
     ]
     vi.mocked(getCircles).mockResolvedValue(mockCircles)
     await useCircleStore.getState().loadCircles()

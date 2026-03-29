@@ -1,7 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useChatStore } from '../../store/chatStore'
 import { useAuthStore } from '../../store/authStore'
+import { getMatrixClient } from '../../matrix/client'
+import { sendTextMessage } from '../../matrix/messages'
 import { MessageBubble } from './MessageBubble'
 import { MessageInput } from './MessageInput'
 import { TypingIndicator } from './TypingIndicator'
@@ -11,10 +13,11 @@ export function ChatView() {
   const { roomId } = useParams<{ roomId: string }>()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { matrixUserId } = useAuthStore()
-  const { messages, typingUsers, setActiveRoom, addMessage } = useChatStore()
+  const { messages, typingUsers, rooms, setActiveRoom, addMessage, updateMessageStatus } = useChatStore()
 
   const roomMessages = roomId ? messages.get(roomId) || [] : []
   const typing = roomId ? typingUsers.get(roomId) || [] : []
+  const room = rooms.find((r) => r.id === roomId)
 
   useEffect(() => {
     if (roomId) setActiveRoom(roomId)
@@ -25,10 +28,12 @@ export function ChatView() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [roomMessages.length])
 
-  const handleSend = (text: string) => {
+  const handleSend = useCallback(async (text: string) => {
     if (!roomId) return
+
+    const pendingId = `pending-${Date.now()}`
     const message = {
-      id: `pending-${Date.now()}`,
+      id: pendingId,
       roomId,
       senderId: matrixUserId || '',
       senderName: 'You',
@@ -38,13 +43,31 @@ export function ChatView() {
       status: 'sending' as const,
     }
     addMessage(roomId, message)
-    // Actual sending happens via matrix client in a hook
-  }
+
+    const client = getMatrixClient()
+    if (!client) {
+      updateMessageStatus(roomId, pendingId, 'error')
+      return
+    }
+
+    try {
+      await sendTextMessage(client, roomId, text)
+      updateMessageStatus(roomId, pendingId, 'sent')
+    } catch (err) {
+      console.error('Failed to send message:', err)
+      updateMessageStatus(roomId, pendingId, 'error')
+    }
+  }, [roomId, matrixUserId, addMessage, updateMessageStatus])
 
   if (!roomId) return null
 
   return (
     <div className={styles.container}>
+      {room && (
+        <div className={styles.roomHeader}>
+          <h3 className={styles.roomName}>{room.name}</h3>
+        </div>
+      )}
       <div className={styles.messages}>
         {roomMessages.length === 0 && (
           <div className={styles.empty}>

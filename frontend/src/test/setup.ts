@@ -31,6 +31,10 @@ vi.mock('matrix-js-sdk', () => ({
   IndexedDBCryptoStore: vi.fn(),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   MemoryStore: function MockMemoryStore(this: any) { return this } as unknown as typeof import('matrix-js-sdk').MemoryStore,
+  ClientEvent: { Sync: 'Sync' },
+  RoomEvent: { Timeline: 'Room.timeline' },
+  RoomMemberEvent: { Typing: 'RoomMember.typing', Membership: 'RoomMember.membership' },
+  MsgType: { Image: 'm.image', File: 'm.file' },
 }))
 
 // Mock indexedDB for matrix crypto store

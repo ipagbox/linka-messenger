@@ -5,6 +5,18 @@
   overflow: hidden;
 }
 
+.roomHeader {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.roomName {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;

@@ -9,6 +9,8 @@ export interface Circle {
   id: number
   name: string
   matrix_space_id: string | null
+  matrix_general_room_id: string | null
+  matrix_announcements_room_id: string | null
   max_members: number
   member_count: number
   creator: { id: number; display_name: string } | null

@@ -16,10 +16,12 @@ const makeMessage = (id: string, roomId: string): Message => ({
 describe('chatStore', () => {
   beforeEach(() => {
     useChatStore.setState({
+      rooms: [],
       messages: new Map(),
       pendingMessages: [],
       typingUsers: new Map(),
       activeRoomId: null,
+      isSyncing: false,
     })
   })
 
@@ -59,5 +61,31 @@ describe('chatStore', () => {
   it('sets active room', () => {
     useChatStore.getState().setActiveRoom('room-xyz')
     expect(useChatStore.getState().activeRoomId).toBe('room-xyz')
+  })
+
+  it('sets rooms', () => {
+    const rooms = [
+      { id: 'room-a', name: 'General', unreadCount: 0, isDM: false, isGeneral: true, isAnnouncements: false },
+      { id: 'room-b', name: 'Alice', unreadCount: 1, isDM: true, isGeneral: false, isAnnouncements: false, members: ['@alice:localhost', '@me:localhost'] },
+    ]
+    useChatStore.getState().setRooms(rooms)
+    expect(useChatStore.getState().rooms).toHaveLength(2)
+  })
+
+  it('finds DM room by user id', () => {
+    const rooms = [
+      { id: 'room-a', name: 'General', unreadCount: 0, isDM: false, isGeneral: true, isAnnouncements: false },
+      { id: 'room-b', name: 'Alice', unreadCount: 0, isDM: true, isGeneral: false, isAnnouncements: false, members: ['@alice:localhost', '@me:localhost'] },
+    ]
+    useChatStore.getState().setRooms(rooms)
+    expect(useChatStore.getState().findDMRoom('@alice:localhost')?.id).toBe('room-b')
+    expect(useChatStore.getState().findDMRoom('@bob:localhost')).toBeUndefined()
+  })
+
+  it('tracks syncing state', () => {
+    useChatStore.getState().setSyncing(true)
+    expect(useChatStore.getState().isSyncing).toBe(true)
+    useChatStore.getState().setSyncing(false)
+    expect(useChatStore.getState().isSyncing).toBe(false)
   })
 })

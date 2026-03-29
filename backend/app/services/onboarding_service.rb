@@ -23,8 +23,9 @@ class OnboardingService
       InviteService.new.consume(token, user)
 
       begin
-        access_token = matrix_service.get_user_access_token(username)
-        device_id = SecureRandom.hex(8).upcase
+        login_result = matrix_service.login_with_password(user.matrix_user_id, password)
+        access_token = login_result["access_token"]
+        device_id = login_result["device_id"]
 
         [ invite.circle.matrix_general_room_id, invite.circle.matrix_announcements_room_id ].compact.each do |room_id|
           matrix_service.join_room(user.matrix_user_id, room_id)

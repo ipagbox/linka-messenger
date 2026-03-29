@@ -52,8 +52,20 @@ function roomToChatRoom(room: Room, client: MatrixClient): ChatRoom {
 export function useMatrixSync(): { client: MatrixClient | null; isReady: boolean } {
   const clientRef = useRef<MatrixClient | null>(null)
   const isReadyRef = useRef(false)
-  const { matrixAccessToken, matrixUserId, matrixDeviceId, isAuthenticated } = useAuthStore()
+  const { matrixAccessToken, matrixUserId, matrixDeviceId, isAuthenticated, logout } = useAuthStore()
   const { setRooms, addMessage, setMessages, setTypingUsers, setSyncing, reset } = useChatStore()
+
+  const handleUnknownTokenError = useCallback((error: unknown) => {
+    if (!error || typeof error !== 'object') return
+
+    const matrixErr = error as { errcode?: string; data?: { errcode?: string } }
+    const errcode = matrixErr.errcode ?? matrixErr.data?.errcode
+    if (errcode === 'M_UNKNOWN_TOKEN') {
+      console.warn('Matrix access token is invalid or expired, logging out')
+      logout()
+      setSyncing(false)
+    }
+  }, [logout, setSyncing])
 
   const refreshRooms = useCallback(() => {
     const client = clientRef.current
@@ -92,7 +104,11 @@ export function useMatrixSync(): { client: MatrixClient | null; isReady: boolean
         clientRef.current = client
 
         // Listen for sync to populate rooms
-        client.on(ClientEvent.Sync, (state: string) => {
+        client.on(ClientEvent.Sync, (state: string, _prevState: string | null, data?: { error?: unknown }) => {
+          if (state === 'ERROR' && data?.error) {
+            handleUnknownTokenError(data.error)
+          }
+
           if (state === 'PREPARED' || state === 'SYNCING') {
             isReadyRef.current = true
             setSyncing(false)
@@ -147,6 +163,7 @@ export function useMatrixSync(): { client: MatrixClient | null; isReady: boolean
         })
       } catch (err) {
         console.error('Matrix client init failed:', err)
+        handleUnknownTokenError(err)
         setSyncing(false)
       }
     }
@@ -160,7 +177,7 @@ export function useMatrixSync(): { client: MatrixClient | null; isReady: boolean
       destroyMatrixClient()
       reset()
     }
-  }, [isAuthenticated, matrixAccessToken, matrixUserId, matrixDeviceId, addMessage, setMessages, setTypingUsers, setSyncing, refreshRooms, reset])
+  }, [isAuthenticated, matrixAccessToken, matrixUserId, matrixDeviceId, addMessage, setMessages, setTypingUsers, setSyncing, refreshRooms, reset, handleUnknownTokenError])
 
   return { client: getMatrixClient(), isReady: isReadyRef.current }
 }

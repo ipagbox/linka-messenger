@@ -20,7 +20,7 @@ RSpec.describe OnboardingService, type: :service do
     before do
       invite
       stub_matrix_create_user
-      stub_matrix_get_user_access_token
+      stub_matrix_password_login
       stub_matrix_join_room
     end
 

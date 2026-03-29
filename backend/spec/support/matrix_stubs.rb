@@ -58,6 +58,21 @@ module MatrixStubs
       )
   end
 
+  def stub_matrix_password_login(user_id = nil, response = {})
+    body = {
+      user_id: user_id || "@user:#{SERVER_NAME}",
+      access_token: "syt_#{SecureRandom.hex(16)}",
+      device_id: "DEVICE123"
+    }.merge(response)
+
+    stub_request(:post, "#{MATRIX_URL}/_matrix/client/v3/login")
+      .to_return(
+        status: 200,
+        body: body.to_json,
+        headers: { 'Content-Type' => 'application/json' }
+      )
+  end
+
   def stub_matrix_space_child(space_id, room_id)
     stub_request(:put, /#{MATRIX_URL}\/_matrix\/client\/v3\/rooms\/.*\/state\/m\.space\.child\//)
       .to_return(

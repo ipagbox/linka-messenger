@@ -10,7 +10,6 @@ Rails.application.routes.draw do
       resources :circles, only: [ :index, :show, :create ] do
         resources :invites, only: [ :create, :index ], module: :circles
         resources :members, only: [ :index ], module: :circles
-        resource :join, only: [ :create ], module: :circles
       end
 
       resource :profile, only: [ :show, :update ]
